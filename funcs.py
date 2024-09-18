@@ -159,3 +159,31 @@ def bodies_to_df(bodies):
         vals = [v["value"] for v in data]
         dfs.update({k: pd.DataFrame({"surface_area": vals}, index=index)})
     return dfs
+
+
+# anomaly computation
+def anomaly(df, df_clim):
+    """
+    Returns
+    -------
+
+    df : DataFrame of dataset
+        column: reservoir_id
+        index: datetime of anomaly
+
+    """
+    # add common column for month
+    df_clim["month"] = df_clim.index
+    df['month'] = df.index.month
+    df_anom = df.merge(df_clim, on='month', how='left')
+    df_anom.index = df.index
+    df_anom.index.name = "time"
+    df_anom["anomaly"] = (df_anom["surface_area"] - df_anom["mean"]) / df_anom["std"]
+    df_anom.drop(columns=["mean", "std"], inplace=True)
+    return df_anom
+
+
+def anomalies_all(dfs, dfs_clim):
+    # compute all anomalies for all reservoirs
+    # concatenate into a logical dataframe
+    pass
