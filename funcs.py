@@ -1,4 +1,9 @@
+import os
+import pandas as pd
 import requests
+import time
+import tqdm
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -44,6 +49,35 @@ def get_multi_reservoir_ts(reservoir_ids, start, stop, variable="surface_water_a
     return requests.get(url, params=params)
 
 
+def get_reservoirs_per_interval(res_ids, curdate=datetime.utcnow(), interval=10, max_nr=None):
+    start, stop = get_month_interval()
+    # count the time to read data
+    t1 = time.time()
+
+    ts = {}
+    if max_nr is None:
+        ns = range(0, int(len(res_ids)), interval)
+    else:
+        # limit to amount of available reservoirs
+        max_nr = int(min(len(res_ids), max_nr))
+        ns = range(0, max_nr, interval)
+    print(f"Reading {max_nr} reservoirs for datetime {start} until {stop} in batches of {interval}")
+    for n in tqdm(ns):
+        r = get_multi_reservoir_ts(res_ids[n:n+interval], start=start, stop=stop)
+        data = r.json()
+        if data["source_data"] is None:
+            print("Warning, this interval contained no source data")
+        else:
+            ts.update(data["source_data"])
+    t2 = time.time()
+
+    ts
+
+    print(f"Reading month data for {len(res_ids[:interval])} reservoirs took {t2 - t1} seconds.")
+    return ts
+
+
+
 def get_month_interval(
         curdate=datetime.utcnow()
 ):
@@ -57,6 +91,12 @@ def get_month_interval(
     month = relativedelta(months=1)
     first_of_last_month = first_of_month - month
     return first_of_last_month, first_of_month
+
+
+def read_climatology(path, fmt, reservoir_id):
+    fn = os.path.join(path, fmt.format(reservoir_id))
+    df = pd.read_csv(fn, index_col="time")
+    return df
 
 
 # retrieval of a limited set of reservoirs from the full set based on minimum / maximum value
@@ -76,3 +116,46 @@ def filter_reservoirs(gdf, min_val, max_val, field="mean"):
     gdf_sel = gdf_sel[gdf_sel[field] > min_val]
     return gdf_sel
 
+
+def bodies_to_df(bodies):
+    """
+    Restructure sets of raw time series per reservoir (dict) to dict of pd.DataFrame
+
+    Example input:
+    ```
+    {
+        "00001": [
+            {
+                "t": "2024-09-01T00:00:00",
+                "value": "12345000"
+            },
+            {
+                "t": "2024-09-07T00:00:00",
+                "value": "23456000"
+            },
+            ...
+        ],
+        "00002": [
+            ...
+        ]
+    }
+    ```
+
+    Example output
+
+    {
+        "00001': surface_area
+            2024-09-01  12345000
+            2024-09-07  23456000,
+        "00002": surface_area
+            ...
+    }
+
+
+    """
+    dfs = {}
+    for k, data in bodies.items():
+        index = pd.DatetimeIndex([v["t"] for v in data])
+        vals = [v["value"] for v in data]
+        dfs.update({k: pd.DataFrame({"surface_area": vals}, index=index)})
+    return dfs

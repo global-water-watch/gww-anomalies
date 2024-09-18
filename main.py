@@ -33,3 +33,5 @@ def main():
     print(
         "After filtering for size and available climatology data, {:1.2f} percent of reservoirs is left for analysis".format(
             percentage_left))
+
+    # read reservoir data
