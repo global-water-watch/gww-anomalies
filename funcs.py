@@ -10,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 base_url = "https://api.globalwaterwatch.earth"
 
 
-# base functions for retrieval of time series
+# base functions for API calls such as retrieval of time series
 def get_reservoir_ts(reservoir_id, start, stop):
     """
     Get time series data for reservoir with given ID
@@ -75,6 +75,18 @@ def get_reservoirs_per_interval(res_ids, curdate=datetime.utcnow(), interval=10,
 
     print(f"Reading month data for {len(res_ids[:interval])} reservoirs took {t2 - t1} seconds.")
     return ts
+
+
+def patch_api_resource_watch(base_url, end_point, body={}):
+    """
+    Patch data set on API of resource watch.
+
+    Check example code on resource watch repositories, e.g.
+
+    https://github.com/resource-watch/nrt-scripts/blob/master/cli_035_surface_temp_analysis/contents/src/__init__.py
+
+    """
+    raise NotImplementedError
 
 
 
@@ -187,3 +199,16 @@ def anomalies_all(dfs, dfs_clim):
     # compute all anomalies for all reservoirs
     # concatenate into a logical dataframe
     pass
+
+
+def parse_df_to_body():
+    """
+    Parse DataFrame with reservoir anomalies to a body that can be submitted to an API (e.g. ResourceWatch)
+
+    Returns
+    -------
+
+
+
+    """
+    raise NotImplementedError
