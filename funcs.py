@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import requests
 import time
-import tqdm
+from tqdm import tqdm
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -197,8 +197,9 @@ def anomaly(df, df_clim):
 
 def anomalies_all(dfs, dfs_clim):
     # compute all anomalies for all reservoirs
-    # concatenate into a logical dataframe
-    pass
+    for k in dfs:
+        dfs[k] = anomaly(dfs[k], dfs_clim[k])
+    return dfs
 
 
 def parse_df_to_body():
