@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 
-import gww_anomalies.funcs as funcs
+from gww_anomalies import utils
 
 MIN_VAL = 5e6 # 5 km2
 # MIN_VAL = 1e8
@@ -21,7 +21,7 @@ def main():
     shapefile = SHAPEFILE
     gdf = gpd.read_file(shapefile)
     print(f"Shapefile {shapefile} read in memory")
-    gdf_sel = funcs.filter_reservoirs(gdf, min_val=MIN_VAL, max_val=MAX_VAL)
+    gdf_sel = utils.filter_reservoirs(gdf, min_val=MIN_VAL, max_val=MAX_VAL)
 
     # get the reservoir ids from the shapefile
     reservoir_ids = gdf_sel["fid"].values
@@ -43,7 +43,7 @@ def main():
             percentage_left))
     # read all climatologies
     dfs_clim = {
-        res_id:funcs.read_climatology(
+        res_id:utils.read_climatology(
             path=CLIM_PATH,
             fmt=CLIM_FMT,
             reservoir_id=res_id
@@ -51,14 +51,14 @@ def main():
     }
 
     # read reservoir time series data for the past month
-    ts = funcs.get_reservoirs_per_interval(
+    ts = utils.get_reservoirs_per_interval(
         res_ids,
         curdate=datetime.utcnow(),
         interval=10,
         max_nr=100
     )
     # convert raw bodies into dataframes for easier manipulation
-    dfs = funcs.bodies_to_df(ts)
+    dfs = utils.bodies_to_df(ts)
     # aggregate to monthlies using resampling
     dfs_month = {k: v.resample("M").mean() for k, v in dfs.items()}
 
@@ -66,7 +66,7 @@ def main():
     dfs_month = {i: dfs_month[str(i)] for i in dfs_clim.keys() if str(i) in dfs_month}
     dfs_clim = {i: dfs_clim[i] for i in dfs_clim.keys() if i in dfs_month}
 
-    dfs_anom = funcs.anomalies_all(dfs_month, dfs_clim=dfs_clim)
+    dfs_anom = utils.anomalies_all(dfs_month, dfs_clim=dfs_clim)
 
     # TODO: convert plot stuff below into a function
     # select locs for plotting

@@ -1,20 +1,18 @@
+import logging
 import os
-import pandas as pd
-import time
-from tqdm import tqdm
-
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
 from dateutil.relativedelta import relativedelta
+from google.cloud import storage
+from urllib.request import urlretrieve
 
-
-
-
-
+logger = logging.getLogger()
 
 
 def patch_api_resource_watch(base_url, end_point, body={}):
-    """
-    Patch data set on API of resource watch.
+    """Patch data set on API of resource watch.
 
     Check example code on resource watch repositories, e.g.
 
@@ -24,12 +22,8 @@ def patch_api_resource_watch(base_url, end_point, body={}):
     raise NotImplementedError
 
 
-
-def get_month_interval(
-        curdate=datetime.utcnow()
-):
-    """
-    Get the last month's start and end date.
+def get_month_interval(curdate=datetime.utcnow()):
+    """Get the last month's start and end date.
 
     curdate : datetime, optional
         current datetime (default: now!)
@@ -48,8 +42,7 @@ def read_climatology(path, fmt, reservoir_id):
 
 # retrieval of a limited set of reservoirs from the full set based on minimum / maximum value
 def filter_reservoirs(gdf, min_val, max_val, field="mean"):
-    """
-    Filter reservoirs from a GeoDataFrame based on values in a provided field
+    """Filter reservoirs from a GeoDataFrame based on values in a provided field
     gdf : gpd.GeoDataFrame
     min_val : float
         minimum value in `area_field`
@@ -65,8 +58,7 @@ def filter_reservoirs(gdf, min_val, max_val, field="mean"):
 
 
 def bodies_to_df(bodies):
-    """
-    Restructure sets of raw time series per reservoir (dict) to dict of pd.DataFrame
+    """Restructure sets of raw time series per reservoir (dict) to dict of pd.DataFrame
 
     Example input:
     ```
@@ -110,10 +102,8 @@ def bodies_to_df(bodies):
 
 # anomaly computation
 def anomaly(df, df_clim):
-    """
-    Returns
+    """Returns
     -------
-
     df : DataFrame of dataset
         column: reservoir_id
         index: datetime of anomaly
@@ -121,8 +111,8 @@ def anomaly(df, df_clim):
     """
     # add common column for month
     df_clim["month"] = df_clim.index
-    df['month'] = df.index.month
-    df_anom = df.merge(df_clim, on='month', how='left')
+    df["month"] = df.index.month
+    df_anom = df.merge(df_clim, on="month", how="left")
     df_anom.index = df.index
     df_anom.index.name = "time"
     df_anom["anomaly"] = (df_anom["surface_area"] - df_anom["mean"]) / df_anom["std"]
@@ -138,8 +128,7 @@ def anomalies_all(dfs, dfs_clim):
 
 
 def parse_df_to_body():
-    """
-    Parse DataFrame with reservoir anomalies to a body that can be submitted to an API (e.g. ResourceWatch)
+    """Parse DataFrame with reservoir anomalies to a body that can be submitted to an API (e.g. ResourceWatch)
 
     Returns
     -------
@@ -148,3 +137,12 @@ def parse_df_to_body():
 
     """
     raise NotImplementedError
+
+
+def get_reservoir_geometries(
+    reservoir_locations: str | Path,
+) -> None:
+    logging.info("Downloading reservoir locations file from global-water-watch bucket")
+    urlretrieve("https://storage.googleapis.com/global-water-watch/shp/reservoirs-v1.0.gpkg", reservoir_locations)
+    log_msg = f"Downloaded reservoir locations file to {reservoir_locations}"
+    logging.info(log_msg)

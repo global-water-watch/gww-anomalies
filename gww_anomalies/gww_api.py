@@ -1,30 +1,34 @@
+"""Functions for interacting with the GWW API."""
 
-import requests
+from __future__ import annotations
+
+import logging
 import time
 from datetime import datetime
-from gww_anomalies.utils import get_month_interval
+
+import requests
 import tqdm
-import logging
+
+from gww_anomalies.utils import get_month_interval
 
 base_url = "https://api.globalwaterwatch.earth"
 
 
 # base functions for API calls such as retrieval of time series
-def get_reservoir_ts(reservoir_id, start, stop):
-    """
-    Get time series data for reservoir with given ID
-    """
+def get_reservoir_ts(reservoir_id: str, start: datetime, stop: datetime) -> dict:
+    """Get time series data for reservoir with given ID."""
     url = f"{base_url}/reservoir/{reservoir_id}/ts"
-    params = {
-        "start": start.strftime("%Y-%m-%dT%H:%M:%S"),
-        "stop": stop.strftime("%Y-%m-%dT%H:%M:%S")
-    }
-    return requests.get(url, params=params)
+    params = {"start": start.strftime("%Y-%m-%dT%H:%M:%S"), "stop": stop.strftime("%Y-%m-%dT%H:%M:%S")}
+    return requests.get(url, params=params).json()
 
 
-def get_multi_reservoir_ts(reservoir_ids, start, stop, variable="surface_water_area"):
-    """
-    Get time series data for multiple reservoirs.
+def get_multi_reservoir_ts(
+    reservoir_ids: list[str],
+    start: datetime,
+    stop: datetime,
+    variable: str = "surface_water_area",
+) -> dict:
+    """Get time series data for multiple reservoirs.
 
     reservoir_ids : int, list[int]
         At least one id of reservoir(s)
@@ -36,16 +40,16 @@ def get_multi_reservoir_ts(reservoir_ids, start, stop, variable="surface_water_a
         variable to retrieve from API (default: "surface_water_area")
 
     """
-
     url = f"{base_url}/ts"
     params = {
         "variable_name": variable,
         "start": start.strftime("%Y-%m-%dT%H:%M:%S"),
         "stop": stop.strftime("%Y-%m-%dT%H:%M:%S"),
         "reservoir_ids": reservoir_ids,
-        "agg_period": "monthly"
+        "agg_period": "monthly",
     }
     return requests.get(url, params=params)
+
 
 def get_reservoirs_per_interval(res_ids, curdate=datetime.utcnow(), interval=10, max_nr=None):
     start, stop = get_month_interval()
@@ -62,7 +66,7 @@ def get_reservoirs_per_interval(res_ids, curdate=datetime.utcnow(), interval=10,
     log_msg = f"Reading {max_nr} reservoirs for datetime {start} until {stop} in batches of {interval}"
     logging.info(log_msg)
     for n in tqdm(ns):
-        r = get_multi_reservoir_ts(res_ids[n:n+interval], start=start, stop=stop)
+        r = get_multi_reservoir_ts(res_ids[n : n + interval], start=start, stop=stop)
         data = r.json()
         if data["source_data"] is None:
             logging.warning("Warning, this interval contained no source data")
@@ -70,7 +74,6 @@ def get_reservoirs_per_interval(res_ids, curdate=datetime.utcnow(), interval=10,
             ts.update(data["source_data"])
     t2 = time.time()
 
-    ts
-    log_msg =f"Reading month data for {len(res_ids[:interval])} reservoirs took {t2 - t1} seconds."
+    log_msg = f"Reading month data for {len(res_ids[:interval])} reservoirs took {t2 - t1} seconds."
     logging.info(log_msg)
     return ts
