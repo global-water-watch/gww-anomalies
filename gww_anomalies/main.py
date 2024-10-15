@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 
-import funcs
+import gww_anomalies.funcs as funcs
 
 MIN_VAL = 5e6 # 5 km2
 # MIN_VAL = 1e8
