@@ -1,25 +1,21 @@
+"""Utility functions."""
+
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
-
-import pandas as pd
-from dateutil.relativedelta import relativedelta
-from google.cloud import storage
+from typing import TYPE_CHECKING
 from urllib.request import urlretrieve
 
+import pandas as pd
+import geopandas as gpd
+from dateutil.relativedelta import relativedelta
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 logger = logging.getLogger()
-
-
-def patch_api_resource_watch(base_url, end_point, body={}):
-    """Patch data set on API of resource watch.
-
-    Check example code on resource watch repositories, e.g.
-
-    https://github.com/resource-watch/nrt-scripts/blob/master/cli_035_surface_temp_analysis/contents/src/__init__.py
-
-    """
-    raise NotImplementedError
 
 
 def get_month_interval(curdate=datetime.utcnow()):
@@ -41,7 +37,7 @@ def read_climatology(path, fmt, reservoir_id):
 
 
 # retrieval of a limited set of reservoirs from the full set based on minimum / maximum value
-def filter_reservoirs(gdf, min_val, max_val, field="mean"):
+def filter_reservoirs(gdf: gpd.GeoDataFrame, min_val: float, max_val: float, field: str = "mean"):
     """Filter reservoirs from a GeoDataFrame based on values in a provided field
     gdf : gpd.GeoDataFrame
     min_val : float
@@ -139,10 +135,12 @@ def parse_df_to_body():
     raise NotImplementedError
 
 
-def get_reservoir_geometries(
+def download_reservoir_geometries(
     reservoir_locations: str | Path,
 ) -> None:
     logging.info("Downloading reservoir locations file from global-water-watch bucket")
-    urlretrieve("https://storage.googleapis.com/global-water-watch/shp/reservoirs-v1.0.gpkg", reservoir_locations)
+    urlretrieve(
+        "https://storage.googleapis.com/global-water-watch/shp/reservoirs-locations-v1.0.gpkg", reservoir_locations
+    )
     log_msg = f"Downloaded reservoir locations file to {reservoir_locations}"
     logging.info(log_msg)
