@@ -8,7 +8,7 @@ from datetime import datetime
 import geopandas as gpd
 from tqdm import tqdm
 
-from gww_anomalies import CACHE_PATH
+from gww_anomalies import RESERVOIR_LOCATIONS
 from gww_anomalies.gww_api import get_multi_reservoir_ts
 from gww_anomalies.utils import get_reservoir_geometries
 
@@ -24,7 +24,7 @@ def get_climatology(
     update_locations: bool = False,
 ):
     if not reservoir_locations:
-        reservoir_locations = CACHE_PATH / "reservoirs.gpkg"
+        reservoir_locations = RESERVOIR_LOCATIONS
     if not reservoir_locations.exists() or update_locations:
         get_reservoir_geometries(
             reservoir_locations=reservoir_locations,

@@ -82,12 +82,17 @@ def fit(ts, dist="norm", include_zero=False):
 
 
 
+
+
 def main():
     reservoir_locations_fp = Path("data/reservoirs-locations-v1.0.gpkg")
     if not reservoir_locations_fp.exists():
         download_reservoir_geometries(reservoir_locations_fp)
     reservoir_locations = gpd.read_file(reservoir_locations_fp)
+    reservoir_locations = reservoir_locations.iloc[13000:] # first 13000 reservoirs are too small
+    
     print(f"Retrieving surface water area timeseries for {len(reservoir_locations)} reservoirs")
+    climatologies = []
     for fid in tqdm(reservoir_locations["feature_id"]):
         reservoir_ts = get_reservoir_ts(reservoir_id=fid, start=START_DATE, stop=END_DATE, var_name="surface_water_area_monthly")
         if len(reservoir_ts) < 100: # skip reservoirs that have less than 100 records
@@ -100,11 +105,21 @@ def main():
         if locs:
             df = df.iloc[locs[0]:]
         df_g = df.groupby(df.index.month)
+        min_samples = np.array([len(g) for n, g in df_g]).min()
+        if min_samples < MIN_SAMPLE_SIZE:
+            continue # Dont calculate the 
         fit_params = df_g.apply(fit, dist=DIST, include_zero=INCLUDE_ZERO)
         params_array = np.array([list(p[0]) for p in fit_params])
         
-        
+        climatology = {"fid": fid}
         for x in range(12):
+            climatology.update({f"mean_{x+1}": params_array[x][0]})
+            climatology.update({f"std_{x+1}": params_array[x][1]})
+
+        climatologies.append(climatology)
+    climatology_df = pd.DataFrame(climatologies)
+    climatology_df.to_parquet("data/climatologies.parquet")
+
             
 
 
