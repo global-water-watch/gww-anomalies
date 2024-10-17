@@ -9,3 +9,5 @@ dependencies:
   - pip:
       - google-cloud-storage
       - tqdm
+      - fastparquet
+      - ruptures
