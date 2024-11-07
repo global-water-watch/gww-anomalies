@@ -80,10 +80,6 @@ def fit(ts, dist="norm", include_zero=False):
     return fit_params, prob_zero
 
 
-
-
-
-
 def main():
     reservoir_locations_fp = Path("data/reservoirs-locations-v1.0.gpkg")
     if not reservoir_locations_fp.exists():
@@ -119,18 +115,6 @@ def main():
         climatologies.append(climatology)
     climatology_df = pd.DataFrame(climatologies)
     climatology_df.to_parquet("data/climatologies.parquet")
-
-            
-
-
-
-
-
-
-
-    
-        
-
 
 
 if __name__ == "__main__":
