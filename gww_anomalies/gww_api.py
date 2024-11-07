@@ -15,7 +15,7 @@ base_url = "https://api.globalwaterwatch.earth"
 
 
 # base functions for API calls such as retrieval of time series
-def get_reservoir_ts(reservoir_id: str, start: datetime, stop: datetime, var_name: str) -> dict:
+def get_reservoir_ts(reservoir_id: str, start: datetime, stop: datetime, var_name: str | None = None) -> dict:
     """Get time series data for reservoir with given ID."""
     url = f"{base_url}/reservoir/{reservoir_id}/ts/{var_name}"
     params = {"start": start.strftime("%Y-%m-%dT%H:%M:%S"), "stop": stop.strftime("%Y-%m-%dT%H:%M:%S")}

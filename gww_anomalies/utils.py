@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 from urllib.request import urlretrieve
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 from dateutil.relativedelta import relativedelta
 
 if TYPE_CHECKING:
@@ -17,8 +17,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger()
 
+CUR_DATE = datetime.now()
 
-def get_month_interval(curdate=datetime.utcnow()):
+
+def get_month_interval(curdate: datetime = CUR_DATE) -> tuple[datetime, datetime]:
     """Get the last month's start and end date.
 
     curdate : datetime, optional
@@ -38,7 +40,8 @@ def read_climatology(path, fmt, reservoir_id):
 
 # retrieval of a limited set of reservoirs from the full set based on minimum / maximum value
 def filter_reservoirs(gdf: gpd.GeoDataFrame, min_val: float, max_val: float, field: str = "mean"):
-    """Filter reservoirs from a GeoDataFrame based on values in a provided field
+    """Filter reservoirs from a GeoDataFrame based on values in a provided field.
+
     gdf : gpd.GeoDataFrame
     min_val : float
         minimum value in `area_field`
@@ -54,7 +57,7 @@ def filter_reservoirs(gdf: gpd.GeoDataFrame, min_val: float, max_val: float, fie
 
 
 def bodies_to_df(bodies):
-    """Restructure sets of raw time series per reservoir (dict) to dict of pd.DataFrame
+    """Restructure sets of raw time series per reservoir (dict) to dict of pd.DataFrame.
 
     Example input:
     ```
@@ -140,7 +143,8 @@ def download_reservoir_geometries(
 ) -> None:
     logging.info("Downloading reservoir locations file from global-water-watch bucket")
     urlretrieve(
-        "https://storage.googleapis.com/global-water-watch/shp/reservoirs-locations-v1.0.gpkg", reservoir_locations
+        "https://storage.googleapis.com/global-water-watch/shp/reservoirs-locations-v1.0.gpkg",
+        reservoir_locations,
     )
     log_msg = f"Downloaded reservoir locations file to {reservoir_locations}"
     logging.info(log_msg)
