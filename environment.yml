@@ -1,0 +1,13 @@
+name: gww_anomalies
+channels:
+  - conda-forge
+  - default
+dependencies:
+  - python=3.12
+  - pip
+  - geopandas
+  - pip:
+      - google-cloud-storage
+      - tqdm
+      - fastparquet
+      - ruptures
