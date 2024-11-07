@@ -39,7 +39,6 @@ def run(
     if not reservoir_list:
         logger.info("No list of reservoirs given, calculating anomalies for all reservoirs that have climatology.")
         reservoir_list = climatologies["fid"].to_list()
-
     first_of_last_month, first_of_month = get_month_interval()
     anomaly_df = calculate_anomalies(
         climatologies=climatologies,
@@ -82,12 +81,18 @@ def calculate_anomalies(climatologies: pd.DataFrame, fids: list[int], start: dat
         stop,
     )
     for fid in tqdm(fids):
+        if fid not in climatologies["fid"]:
+            warning_msg = f"reservoir {fid} not found in climatologies dataset!"
+            logger.warning(warning_msg)
+            continue
         reservoir_ts = get_reservoir_ts(
             reservoir_id=str(fid),
             start=start,
             stop=stop,
             var_name="surface_water_area",
         )
+        if not reservoir_ts:
+            continue
         monthly_surface_area = sum([x["value"] for x in reservoir_ts]) / len(reservoir_ts)
         reservoir_surface_areas.append({"fid": fid, "monthly_surface_area": monthly_surface_area})
     reservoir_surface_areas_df = pd.DataFrame(reservoir_surface_areas)
