@@ -14,3 +14,7 @@ def test_run(caplog, tmp_path, mocker):
     mock_anomalies.return_value = pd.DataFrame()
     output_path = run(output_dir=tmp_path)
     assert "No list of reservoirs given, calculating anomalies for all reservoirs that have climatology." in caplog.text
+
+
+def test_calculate_anomalies():
+    pass

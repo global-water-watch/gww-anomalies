@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 def run(
     output_dir: str | Path,
     reservoir_list: list[int] | None = None,
+    month: str | None = None
 ) -> Path:
     """Calculate anomalies for given list of reservoir ids and writes to a CSV or vector file.
 
@@ -39,8 +40,11 @@ def run(
     if not reservoir_list:
         logger.info("No list of reservoirs given, calculating anomalies for all reservoirs that have climatology.")
         reservoir_list = climatologies["fid"].to_list()
-    first_of_last_month, first_of_month = get_month_interval()
-    anomaly_df = calculate_anomalies(
+
+    if month:
+        month = datetime.strptime(month, format="dd-mm-YYYY")
+    first_of_last_month, first_of_month = get_month_interval(month)
+    anomaly_df = calculate_anomalies( 
         climatologies=climatologies,
         fids=reservoir_list,
         start=first_of_last_month,

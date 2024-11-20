@@ -6,8 +6,8 @@ dependencies:
   - python=3.12
   - pip
   - geopandas
+  - fastparquet
   - pip:
       - google-cloud-storage
       - tqdm
-      - fastparquet
       - ruptures

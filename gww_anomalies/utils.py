@@ -5,28 +5,27 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING, Tuple
+from pathlib import Path
 from urllib.request import urlretrieve
 
 import geopandas as gpd
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
 logger = logging.getLogger()
 
 CUR_DATE = datetime.now()
 
 
-def get_month_interval(curdate: datetime = CUR_DATE) -> tuple[datetime, datetime]:
-    """Get the last month's start and end date.
+def get_month_interval(date: None | datetime) -> tuple[datetime, datetime]:
+    """Get the month's start and end date.
 
-    curdate : datetime, optional
-        current datetime (default: now!)
+    date : datetime, optional
+        datetime of month of interest (default: now!)
     """
-    first_of_month = datetime(curdate.year, curdate.month, 1, 0, 0)
+    if not date:
+        date = CUR_DATE
+    first_of_month = datetime(date.year, date.month, 1, 0, 0)
     month = relativedelta(months=1)
     first_of_last_month = first_of_month - month
     return first_of_last_month, first_of_month
@@ -148,3 +147,16 @@ def download_reservoir_geometries(
     )
     log_msg = f"Downloaded reservoir locations file to {reservoir_locations}"
     logging.info(log_msg)
+
+
+def _parse_reservoir_ids_file(fp: Path | str) -> list:
+    with Path(fp).open("r") as f:
+        ids = f.read()
+    id_list = ids.split(",")
+
+    try:
+        fid_list = [str(int(x)) for x in id_list]
+    except ValueError as err:
+        err_msg = "Reservoir feature ids must be integers"
+        raise ValueError(err_msg) from err
+    return fid_list
