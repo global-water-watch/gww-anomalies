@@ -1,8 +1,12 @@
 import logging
+from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
+import pytest
 
-from gww_anomalies.main import run
+from gww_anomalies.main import calculate_anomalies, run
+from gww_anomalies.utils import get_month_interval
 
 
 def test_run(caplog, tmp_path, mocker):
@@ -17,4 +21,16 @@ def test_run(caplog, tmp_path, mocker):
 
 
 def test_calculate_anomalies():
-    pass
+    test_data = Path(__file__).parent.parent / "data/climatologies.parquet"
+    if not test_data.exists():
+        pytest.skip("No data to test calculate_anomalies function")
+
+    climatologies_df = pd.read_parquet(test_data)
+    fid_list = [90249, 91611]
+    start, stop = get_month_interval(date= datetime(2020,1,1))
+    anomalies = calculate_anomalies(climatologies_df, fid_list, start, stop)
+    assert isinstance(anomalies, pd.DataFrame)
+    assert len(anomalies) == 2
+
+
+

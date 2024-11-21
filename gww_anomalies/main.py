@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pandas as pd
 from tqdm import tqdm
@@ -12,15 +12,13 @@ from tqdm import tqdm
 from gww_anomalies.gww_api import get_reservoir_ts
 from gww_anomalies.utils import get_month_interval
 
-if TYPE_CHECKING:
-    from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
 def run(
     output_dir: str | Path,
     reservoir_list: list[int] | None = None,
-    month: str | None = None
+    month: str | None = None,
 ) -> Path:
     """Calculate anomalies for given list of reservoir ids and writes to a CSV or vector file.
 
@@ -44,16 +42,18 @@ def run(
     if month:
         month = datetime.strptime(month, format="dd-mm-YYYY")
     first_of_last_month, first_of_month = get_month_interval(month)
-    anomaly_df = calculate_anomalies( 
+    anomaly_df = calculate_anomalies(
         climatologies=climatologies,
         fids=reservoir_list,
         start=first_of_last_month,
         stop=first_of_month,
     )
-    output_path = Path(output_dir) / f"anomalies_{first_of_last_month.month}_{first_of_last_month.year}.csv"
-    logging.info("Writing anomaly dataset to %s", output_path)
-    anomaly_df.to_csv(output_path)
-    return output_path
+    if anomaly_df:
+        output_path = Path(output_dir) / f"anomalies_{first_of_last_month.month}_{first_of_last_month.year}.csv"
+        logging.info("Writing anomaly dataset to %s", output_path)
+        anomaly_df.to_csv(output_path)
+        return output_path
+    return None
 
 
 def calculate_anomalies(climatologies: pd.DataFrame, fids: list[int], start: datetime, stop: datetime) -> pd.DataFrame:
@@ -85,22 +85,26 @@ def calculate_anomalies(climatologies: pd.DataFrame, fids: list[int], start: dat
         stop,
     )
     for fid in tqdm(fids):
-        if fid not in climatologies["fid"]:
+        if fid not in climatologies["fid"].to_numpy():
             warning_msg = f"reservoir {fid} not found in climatologies dataset!"
             logger.warning(warning_msg)
             continue
         reservoir_ts = get_reservoir_ts(
-            reservoir_id=str(fid),
+            reservoir_id=fid,
             start=start,
             stop=stop,
             var_name="surface_water_area",
         )
         if not reservoir_ts:
+            logging.info("No reservoir timeseries found for resevoir with id %s.", fid)
             continue
         monthly_surface_area = sum([x["value"] for x in reservoir_ts]) / len(reservoir_ts)
         reservoir_surface_areas.append({"fid": fid, "monthly_surface_area": monthly_surface_area})
     reservoir_surface_areas_df = pd.DataFrame(reservoir_surface_areas)
-    anomalies_df = reservoir_surface_areas_df.join(climatologies, on="fid", how="inner", rsuffix="r")
+    if reservoir_surface_areas_df.empty:
+        logging.warning("No surface water area found for all reservoirs of interest.")
+        return None
+    anomalies_df = reservoir_surface_areas_df.merge(climatologies, on="fid", how="inner")
     anomalies_df["anomaly"] = (anomalies_df["monthly_surface_area"] - anomalies_df[f"mean_{month}"]) / anomalies_df[
         f"std_{month}"
     ]

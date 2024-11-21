@@ -17,7 +17,7 @@ logger = logging.getLogger()
 CUR_DATE = datetime.now()
 
 
-def get_month_interval(date: None | datetime) -> tuple[datetime, datetime]:
+def get_month_interval(date: None | datetime = None) -> tuple[datetime, datetime]:
     """Get the month's start and end date.
 
     date : datetime, optional
@@ -149,13 +149,13 @@ def download_reservoir_geometries(
     logging.info(log_msg)
 
 
-def _parse_reservoir_ids_file(fp: Path | str) -> list:
+def _parse_reservoir_ids_file(fp: Path | str) -> list[int]:
     with Path(fp).open("r") as f:
         ids = f.read()
     id_list = ids.split(",")
 
     try:
-        fid_list = [str(int(x)) for x in id_list]
+        fid_list = [int(x) for x in id_list]
     except ValueError as err:
         err_msg = "Reservoir feature ids must be integers"
         raise ValueError(err_msg) from err
