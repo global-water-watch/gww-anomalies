@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
@@ -19,6 +20,7 @@ def run(
     output_dir: str | Path,
     reservoir_list: list[int] | None = None,
     month: str | None = None,
+    as_vector: bool | None = None,
 ) -> Path:
     """Calculate anomalies for given list of reservoir ids and writes to a CSV or vector file.
 
@@ -30,6 +32,10 @@ def run(
         Directory to write the anomaly dataset to.
     reservoir_list : list[int] | None, optional
         list of reservoir ids, by default None
+    month : str | None, optional
+        date string in format 'dd-mm-YYYY'
+    as_vector: bool | None, optional
+        return the anomalies dataframe as a GeoJSON file
 
     """
     data_dir = Path(__file__).absolute().parent.parent / "data"
@@ -40,7 +46,7 @@ def run(
         reservoir_list = climatologies["fid"].to_list()
 
     if month:
-        month = datetime.strptime(month, format="dd-mm-YYYY")
+        month = datetime.strptime(month, format="dd-mm-YYYY") #noqa: DTZ007
     first_of_last_month, first_of_month = get_month_interval(month)
     anomaly_df = calculate_anomalies(
         climatologies=climatologies,
@@ -48,11 +54,17 @@ def run(
         start=first_of_last_month,
         stop=first_of_month,
     )
-    if anomaly_df:
-        output_path = Path(output_dir) / f"anomalies_{first_of_last_month.month}_{first_of_last_month.year}.csv"
+    if not anomaly_df.empty:
+        output_path = Path(output_dir) / f"anomalies_{first_of_last_month.month}_{first_of_last_month.year}"
+        if as_vector:
+           output_path = _to_vector(anomalies_df=anomaly_df, output_path=output_path)
+        else:
+            output_path = output_path.with_suffix(".csv")
+            anomaly_df.to_csv(output_path)
+
         logging.info("Writing anomaly dataset to %s", output_path)
-        anomaly_df.to_csv(output_path)
         return output_path
+    logger.warning("No anomalies calculated for the given reservoirs")
     return None
 
 
@@ -109,3 +121,13 @@ def calculate_anomalies(climatologies: pd.DataFrame, fids: list[int], start: dat
         f"std_{month}"
     ]
     return anomalies_df[["fid", "anomaly", "monthly_surface_area"]]
+
+
+def _to_vector(anomalies_df: pd.DataFrame, output_path: Path) -> str:
+    reservoir_locations_path = Path(__file__).absolute().parent.parent / "data" / "reservoirs-locations-v1.0.gpkg"
+    reservoir_locations = gpd.read_file(reservoir_locations_path)
+    reservoir_locations = reservoir_locations.rename(columns={"feature_id":"fid"})
+    anomalies_gdf = reservoir_locations.merge(anomalies_df, on="fid", how="inner")
+    output_path = output_path.with_suffix(".geojson")
+    anomalies_gdf.to_file(output_path)
+    return output_path

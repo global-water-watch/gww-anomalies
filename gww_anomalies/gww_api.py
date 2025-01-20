@@ -19,7 +19,8 @@ def get_reservoir_ts(reservoir_id: str, start: datetime, stop: datetime, var_nam
     """Get time series data for reservoir with given ID."""
     url = f"{base_url}/reservoir/{reservoir_id}/ts/{var_name}"
     params = {"start": start.strftime("%Y-%m-%dT%H:%M:%S"), "stop": stop.strftime("%Y-%m-%dT%H:%M:%S")}
-    return requests.get(url, params=params).json()
+    r = requests.get(url, params=params, timeout=120)
+    return r.json()
 
 
 def get_multi_reservoir_ts(
