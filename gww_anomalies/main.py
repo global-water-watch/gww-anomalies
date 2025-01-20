@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 def run(
     output_dir: str | Path,
+    data_dir: Path,
     reservoir_list: list[int] | None = None,
     month: str | None = None,
     as_vector: bool | None = None,
@@ -30,6 +31,8 @@ def run(
     ----------
     output_dir : str | Path
         Directory to write the anomaly dataset to.
+    data_dir: Path
+        Directory containing the data needed for calculating
     reservoir_list : list[int] | None, optional
         list of reservoir ids, by default None
     month : str | None, optional
@@ -38,7 +41,6 @@ def run(
         return the anomalies dataframe as a GeoJSON file
 
     """
-    data_dir = Path(__file__).absolute().parent.parent / "data"
     climatology_file = data_dir / "climatologies.parquet"
     climatologies = pd.read_parquet(climatology_file)
     if not reservoir_list:
@@ -46,7 +48,7 @@ def run(
         reservoir_list = climatologies["fid"].to_list()
 
     if month:
-        month = datetime.strptime(month, format="dd-mm-YYYY") #noqa: DTZ007
+        month = datetime.strptime(month, format="dd-mm-YYYY")  # noqa: DTZ007
     first_of_last_month, first_of_month = get_month_interval(month)
     anomaly_df = calculate_anomalies(
         climatologies=climatologies,
@@ -57,7 +59,7 @@ def run(
     if not anomaly_df.empty:
         output_path = Path(output_dir) / f"anomalies_{first_of_last_month.month}_{first_of_last_month.year}"
         if as_vector:
-           output_path = _to_vector(anomalies_df=anomaly_df, output_path=output_path)
+            output_path = _to_vector(anomalies_df=anomaly_df, output_path=output_path, data_dir=data_dir)
         else:
             output_path = output_path.with_suffix(".csv")
             anomaly_df.to_csv(output_path)
@@ -123,10 +125,10 @@ def calculate_anomalies(climatologies: pd.DataFrame, fids: list[int], start: dat
     return anomalies_df[["fid", "anomaly", "monthly_surface_area"]]
 
 
-def _to_vector(anomalies_df: pd.DataFrame, output_path: Path) -> str:
-    reservoir_locations_path = Path(__file__).absolute().parent.parent / "data" / "reservoirs-locations-v1.0.gpkg"
+def _to_vector(anomalies_df: pd.DataFrame, output_path: Path, data_dir: Path) -> str:
+    reservoir_locations_path = data_dir / "reservoirs-locations-v1.0.gpkg"
     reservoir_locations = gpd.read_file(reservoir_locations_path)
-    reservoir_locations = reservoir_locations.rename(columns={"feature_id":"fid"})
+    reservoir_locations = reservoir_locations.rename(columns={"feature_id": "fid"})
     anomalies_gdf = reservoir_locations.merge(anomalies_df, on="fid", how="inner")
     output_path = output_path.with_suffix(".geojson")
     anomalies_gdf.to_file(output_path)
