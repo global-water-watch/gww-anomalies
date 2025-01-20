@@ -1,0 +1,5 @@
+geopandas
+fastparquet
+google-cloud-storage
+tqdm
+ruptures
