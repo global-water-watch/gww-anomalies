@@ -5,9 +5,9 @@ channels:
 dependencies:
   - python=3.12
   - pip
-  - geopandas
-  - fastparquet
+  - geopandas=1.0.1
+  - fastparquet=2024.11.0
   - pip:
-      - google-cloud-storage
-      - tqdm
-      - ruptures
+      - google-cloud-storage==2.19.0
+      - tqdm==4.67.1
+      - ruptures==1.1.9
