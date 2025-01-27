@@ -1,0 +1,6 @@
+services:
+  gww_anomalies:
+    build: .
+    image: gww_anomalies
+    volumes:
+      - ./data:/home/app_user/gww-anomalies/data

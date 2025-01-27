@@ -4,7 +4,7 @@ RUN useradd --create-home --shell /bin/bash app_user
 
 USER app_user
 
-WORKDIR /home/app_user/gww_anomalies
+WORKDIR /home/app_user/gww-anomalies
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
