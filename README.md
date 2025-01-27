@@ -51,3 +51,16 @@ The CLI can be called by the commands described above. The CLI can take a couple
 - -m [month] --month,                     the month to calculate the reservoir anomalies for in 'mm-dd-YYYY' format. By default the latest month is used.
 
 - -v, --as-vector,                       write the anomalies file to a vector format (geoJSON). 
+
+
+## Example
+
+```
+docker compose run --rm gww_anomalies -r reservoirs.txt -v -m '07-01-2020'
+```
+This command will calculate reservoir storage anomalies for the reservoir ids in the reservoirs.txt file for the month of July in 2020. Because the '-v' flag the results will be written to a geoJSON file. 
+
+```
+python gww_storage/cli.py -r reservoirs.txt -v -m '07-01-2020'
+```
+Same command but with Python.
