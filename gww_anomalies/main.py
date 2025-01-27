@@ -3,24 +3,28 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import geopandas as gpd
 import pandas as pd
 from tqdm import tqdm
 
 from gww_anomalies.gww_api import get_reservoir_ts
+from gww_anomalies.log import setup_log
 from gww_anomalies.utils import get_month_interval
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from datetime import datetime
+
+logger = setup_log(__name__)
 
 
 def run(
     output_dir: str | Path,
     data_dir: Path,
     reservoir_list: list[int] | None = None,
-    month: str | None = None,
+    month: datetime | None = None,
     as_vector: bool | None = None,
 ) -> Path:
     """Calculate anomalies for given list of reservoir ids and writes to a CSV or vector file.
@@ -35,8 +39,8 @@ def run(
         Directory containing the data needed for calculating
     reservoir_list : list[int] | None, optional
         list of reservoir ids, by default None
-    month : str | None, optional
-        date string in format 'dd-mm-YYYY'
+    month : datetime | None, optional
+        datetime
     as_vector: bool | None, optional
         return the anomalies dataframe as a GeoJSON file
 
@@ -47,8 +51,6 @@ def run(
         logger.info("No list of reservoirs given, calculating anomalies for all reservoirs that have climatology.")
         reservoir_list = climatologies["fid"].to_list()
 
-    if month:
-        month = datetime.strptime(month, format="dd-mm-YYYY")  # noqa: DTZ007
     first_of_last_month, first_of_month = get_month_interval(month)
     anomaly_df = calculate_anomalies(
         climatologies=climatologies,
@@ -130,6 +132,7 @@ def _to_vector(anomalies_df: pd.DataFrame, output_path: Path, data_dir: Path) ->
     reservoir_locations = gpd.read_file(reservoir_locations_path)
     reservoir_locations = reservoir_locations.rename(columns={"feature_id": "fid"})
     anomalies_gdf = reservoir_locations.merge(anomalies_df, on="fid", how="inner")
+    anomalies_gdf = anomalies_gdf[["fid", "anomaly", "monthly_surface_area", "geometry"]]
     output_path = output_path.with_suffix(".geojson")
     anomalies_gdf.to_file(output_path)
     return output_path
