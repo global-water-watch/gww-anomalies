@@ -160,3 +160,13 @@ def _parse_reservoir_ids_file(fp: Path | str) -> list[int]:
         err_msg = "Reservoir feature ids must be integers"
         raise ValueError(err_msg) from err
     return fid_list
+
+
+def parse_date(date_string: str) -> datetime:
+    """Parse date from date string."""
+    date_format = "%m-%d-%Y"
+    try:
+        return datetime.strptime(date_string, date_format)  # noqa: DTZ007
+    except ValueError as err:
+        err_msg = "Incorrect date format, should be 'mm-dd-YYYY'"
+        raise ValueError(err_msg) from err
