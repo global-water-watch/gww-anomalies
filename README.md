@@ -35,19 +35,19 @@ docker compose build
 To run the service:
 
 ```
-docker compose run --rm gww_anomalies  [-h] [-o OUTPUT_DIR] [-r RESERVOIR_IDS_FILE] [-m MONTH] [-v | --as-vector | --no-as-vector]
+docker compose run --rm gww_anomalies  [-h] [-r RESERVOIR_IDS_FILE] [-m MONTH] [-v | --as-vector | --no-as-vector]
 ```
-the commands after 'gww_anomalies' are optional commands that passed to gww_anomalies/cli.py, more on that below.
+the commands after 'gww_anomalies' are optional commands that are passed to gww_anomalies/cli.py, more on that below.
 
 ### CLI
 The CLI can be called by the commands described above. The CLI can take a couple optional arguments for configuring the reservoir anomaly calculation. These options are:
 
-- -h, --help                            show a help message and exit
+- -h, --help,                            show a help message and exit
 
-- -o [output directory], --output-dir   Output directory to write the           reservoir anomalies file to, by default the file is written to './gww-anomalies/data'. Note that when using the Docker image it is not possible to set the output directory. If you wish to do that you can edit the volume binding in the docker compose file. 
+- -o [output directory], --output-dir,   output directory to write the           reservoir anomalies file to, by default the file is written to './gww-anomalies/data'. Note that when using the Docker image it is not possible to set the output directory. If you wish to do that you can edit the volume binding in the docker compose file. 
 
-- -r [reservoir id file], --reservoir_ids_file text file containing reservoir FIDs. The FIDs should be on one line and seperated by a comma. WARNING if this file is not given the app will calculate reservoir anomalies for all reservoirs, this can take up to 7 hours or longer.
+- -r [reservoir id file], --reservoir_ids_file, text file containing reservoir FIDs. The FIDs should be on one line and seperated by a comma. WARNING if this file is not given the app will calculate reservoir anomalies for all reservoirs, this can take up to 7 hours or longer.
 
-- -m [month] --month                    The month to calculate the reservoir anomalies for in 'mm-dd-YYYY' format. By default the latest month is used.
+- -m [month] --month,                     the month to calculate the reservoir anomalies for in 'mm-dd-YYYY' format. By default the latest month is used.
 
-- -v, --as-vector                       Write the anomalies file to a vector format (geoJSON). 
+- -v, --as-vector,                       write the anomalies file to a vector format (geoJSON). 
