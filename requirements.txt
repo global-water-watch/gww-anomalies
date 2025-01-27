@@ -1,5 +1,5 @@
-geopandas
-fastparquet
-google-cloud-storage
-tqdm
-ruptures
+geopandas==1.0.1
+fastparquet==2024.11.0
+google-cloud-storage==2.19.0
+tqdm==4.67.1
+ruptures==1.1.9
